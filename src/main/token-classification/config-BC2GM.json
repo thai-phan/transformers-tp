@@ -1,0 +1,11 @@
+{
+  "model_name_or_path": "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext",
+  "output_dir": "/tmp/test-ner-bc2gm",
+  "train_file": "./data/train.csv",
+  "validation_file": "./data/devel.csv",
+  "test_file": "./data/test.csv",
+  "do_train": true,
+  "do_eval": true,
+  "fp16": true,
+  "overwrite_output_dir": true
+}
