@@ -232,6 +232,8 @@ def main():
         label_list.sort()
         return label_list
 
+    label_list = ["O", "B-GENE", "I-GENE"]
+    label_to_id = {i: i for i in range(len(label_list))}
     if isinstance(features[label_column_name].feature, ClassLabel):
         label_list = features[label_column_name].feature.names
         # No need to convert the labels since they are already ints.
@@ -443,6 +445,6 @@ def _mp_fn(index):
 if __name__ == "__main__":
     # from datasets import load_dataset
     #
-    # dataset = load_dataset('csv', data_files='./data/train-small.csv', delimiter="\t")
+    # dataset = load_dataset('csv', data_files='./data/train-test.csv', delimiter="\t")
     # print("asdas")
     main()
