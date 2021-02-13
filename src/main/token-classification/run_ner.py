@@ -18,12 +18,13 @@ Fine-tuning the library models for token classification.
 # You can also adapt this script on your own token classification task and datasets. Pointers for this are left as
 # comments.
 
-import csv
+import csv as csv_lib
 import logging
 import os
 import sys
 from dataclasses import dataclass, field
 from typing import Optional
+from pyarrow import csv
 
 import numpy as np
 import transformers
@@ -206,8 +207,24 @@ def main():
             data_files["validation"] = data_args.validation_file
         if data_args.test_file is not None:
             data_files["test"] = data_args.test_file
+
+        table = csv.read_csv(data_args.train_file)
         extension = data_args.train_file.split(".")[-1]
-        datasets = load_dataset(extension, data_files=data_files, delimiter="\t", quoting=csv.QUOTE_NONE)
+        datasets = load_dataset(extension, data_files=data_files, delimiter="\t", quoting=csv_lib.QUOTE_NONE)
+        train_dataset = datasets["train"]
+        test_dataset = datasets["test"]
+        validation_dataset = datasets["validation"]
+        class_label = ClassLabel(num_classes=3, names=["O", "B-GENE", "I-GENE"], names_file="train")
+        # train_dataset
+        #  num_classes: int = None
+        #     names: List[str] = None
+        #     names_file: str = None
+        train_dataset.data.add_column
+        # train_dataset.
+
+
+
+
     # See more about loading any type of standard or custom dataset (from files, python dict, pandas DataFrame, etc) at
     # https://huggingface.co/docs/datasets/loading_datasets.html.
 
@@ -232,8 +249,8 @@ def main():
         label_list.sort()
         return label_list
 
-    label_list = ["O", "B-GENE", "I-GENE"]
-    label_to_id = {i: i for i in range(len(label_list))}
+    # label_list = ["O", "B-GENE", "I-GENE"]
+    # label_to_id = {i: i for i in range(len(label_list))}
     if isinstance(features[label_column_name].feature, ClassLabel):
         label_list = features[label_column_name].feature.names
         # No need to convert the labels since they are already ints.
