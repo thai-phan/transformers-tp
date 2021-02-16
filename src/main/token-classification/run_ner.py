@@ -214,7 +214,8 @@ def main():
         train_dataset = datasets["train"]
         test_dataset = datasets["test"]
         validation_dataset = datasets["validation"]
-        class_label = ClassLabel(num_classes=3, names=["O", "B-GENE", "I-GENE"], names_file="train")
+        class_label = ClassLabel(num_classes=3, names=["O", "B-GENE", "I-GENE"])
+        train_dataset
         # train_dataset
         #  num_classes: int = None
         #     names: List[str] = None
