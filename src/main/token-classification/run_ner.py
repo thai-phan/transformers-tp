@@ -25,10 +25,13 @@ import sys
 from dataclasses import dataclass, field
 from typing import Optional
 from pyarrow import csv
-
+import pyarrow as pa
+import main_ner
 import numpy as np
 import transformers
-from datasets import ClassLabel, load_dataset, load_metric
+from datasets import ClassLabel, load_dataset, load_metric, Sequence
+from pyarrow._csv import ParseOptions
+from pyarrow.lib import ChunkedArray
 from transformers import (
     AutoConfig,
     AutoModelForTokenClassification,
@@ -141,6 +144,9 @@ class DataTrainingArguments:
         self.task_name = self.task_name.lower()
 
 
+
+
+
 def main():
     # See all possible arguments in src/transformers/training_args.py
     # or by passing the --help flag to this script.
@@ -208,23 +214,39 @@ def main():
         if data_args.test_file is not None:
             data_files["test"] = data_args.test_file
 
-        table = csv.read_csv(data_args.train_file)
+        table = csv.read_csv("./data/train.csv", parse_options=ParseOptions(delimiter="\t"))
+        class_label_ = table.column("label").unique()
+        class_label = ClassLabel(num_classes=len(class_label_), names=class_label_.tolist())
+        train = main_ner.process_data(data_args.train_file, class_label)
+        test = main_ner.process_data(data_args.test_file, class_label)
+        val =  main_ner.process_data(data_args.validation_file, class_label)
+
+        # table = csv.read_csv(data_args.train_file)
         extension = data_args.train_file.split(".")[-1]
         datasets = load_dataset(extension, data_files=data_files, delimiter="\t", quoting=csv_lib.QUOTE_NONE)
         train_dataset = datasets["train"]
         test_dataset = datasets["test"]
-        validation_dataset = datasets["validation"]
-        class_label = ClassLabel(num_classes=3, names=["O", "B-GENE", "I-GENE"])
-        train_dataset
-        # train_dataset
-        #  num_classes: int = None
-        #     names: List[str] = None
-        #     names_file: str = None
-        train_dataset.data.add_column
-        # train_dataset.
+        val_dataset = datasets["validation"]
 
+        table = train_dataset.data
+        label = table.column("label")
+        class_label_ = label.unique()
+        class_label = Sequence(feature=ClassLabel(num_classes=len(class_label_), names=class_label_.tolist()))
 
+        train_dataset.features['ner_tags'] = class_label
+        # train_ner_list: ChunkedArray = class_label.feature.str2int(train_dataset.data.column('label').to_numpy())
+        # train_ner_array = pa.array(train_ner_list)
+        # train_data = train_dataset.data.append_column("ner_tags", train_ner_array)
+        train_dataset._data = train
 
+        test_dataset.features['ner_tags'] = class_label
+        train_dataset._data = test
+
+        val_dataset.features['ner_tags'] = class_label
+        # val_ner_list: ChunkedArray = class_label.feature.str2int(val_dataset.data.column('label').to_numpy())
+        # val_ner_array = pa.array(val_ner_list)
+        # val_data = val_dataset.data.append_column("ner_tags", val_ner_array)
+        val_dataset._data = val
 
     # See more about loading any type of standard or custom dataset (from files, python dict, pandas DataFrame, etc) at
     # https://huggingface.co/docs/datasets/loading_datasets.html.
@@ -249,10 +271,10 @@ def main():
         label_list = list(unique_labels)
         label_list.sort()
         return label_list
-
+    seq: Sequence = features[label_column_name]
     # label_list = ["O", "B-GENE", "I-GENE"]
     # label_to_id = {i: i for i in range(len(label_list))}
-    if isinstance(features[label_column_name].feature, ClassLabel):
+    if isinstance(seq.feature, ClassLabel):
         label_list = features[label_column_name].feature.names
         # No need to convert the labels since they are already ints.
         label_to_id = {i: i for i in range(len(label_list))}
@@ -312,27 +334,30 @@ def main():
             is_split_into_words=True,
         )
         labels = []
-        for i, label in enumerate(examples[label_column_name]):
-            word_ids = tokenized_inputs.word_ids(batch_index=i)
-            previous_word_idx = None
-            label_ids = []
-            for word_idx in word_ids:
-                # Special tokens have a word id that is None. We set the label to -100 so they are automatically
-                # ignored in the loss function.
-                if word_idx is None:
-                    label_ids.append(-100)
-                # We set the label for the first token of each word.
-                elif word_idx != previous_word_idx:
-                    label_ids.append(label_to_id[label[word_idx]])
-                # For the other tokens in a word, we set the label to either the current label or -100, depending on
-                # the label_all_tokens flag.
-                else:
-                    label_ids.append(label_to_id[label[word_idx]] if data_args.label_all_tokens else -100)
-                previous_word_idx = word_idx
+        if len(examples) == 3:
+            for i, label in enumerate(examples[label_column_name]):
+                word_ids = tokenized_inputs.word_ids(batch_index=i)
+                previous_word_idx = None
+                label_ids = []
+                for word_idx in word_ids:
+                    # Special tokens have a word id that is None. We set the label to -100 so they are automatically
+                    # ignored in the loss function.
+                    if word_idx is None:
+                        label_ids.append(-100)
+                    # We set the label for the first token of each word.
+                    elif word_idx != previous_word_idx:
+                        label_ids.append(label_to_id[label[word_idx]])
+                    # For the other tokens in a word, we set the label to either the current label or -100, depending on
+                    # the label_all_tokens flag.
+                    else:
+                        label_ids.append(label_to_id[label[word_idx]] if data_args.label_all_tokens else -100)
+                    previous_word_idx = word_idx
 
-            labels.append(label_ids)
-        tokenized_inputs["labels"] = labels
-        return tokenized_inputs
+                labels.append(label_ids)
+            tokenized_inputs["labels"] = labels
+            return tokenized_inputs
+        else:
+            print("asdasdsa")
 
     tokenized_datasets = datasets.map(
         tokenize_and_align_labels,

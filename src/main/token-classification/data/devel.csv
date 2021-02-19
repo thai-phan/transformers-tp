@@ -1,4 +1,4 @@
-token	label
+tokens	label
 In	O
 the	O
 8	O
@@ -7,7 +7,7 @@ the	O
 difference	O
 betweent	O
 he	O
-mean	O`
+mean	O
 diastolic	O
 values	O
 of	O

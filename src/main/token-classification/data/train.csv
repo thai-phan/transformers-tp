@@ -1,4 +1,4 @@
-token	label
+tokens	label
 Comparison	O
 with	O
 alkaline	B-GENE
