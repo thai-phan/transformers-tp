@@ -219,7 +219,7 @@ def main():
         class_label = ClassLabel(num_classes=len(class_label_), names=class_label_.tolist())
         train = main_ner.process_data(data_args.train_file, class_label)
         test = main_ner.process_data(data_args.test_file, class_label)
-        val =  main_ner.process_data(data_args.validation_file, class_label)
+        val = main_ner.process_data(data_args.validation_file, class_label)
 
         # table = csv.read_csv(data_args.train_file)
         extension = data_args.train_file.split(".")[-1]
@@ -240,7 +240,7 @@ def main():
         train_dataset._data = train
 
         test_dataset.features['ner_tags'] = class_label
-        train_dataset._data = test
+        test_dataset._data = test
 
         val_dataset.features['ner_tags'] = class_label
         # val_ner_list: ChunkedArray = class_label.feature.str2int(val_dataset.data.column('label').to_numpy())

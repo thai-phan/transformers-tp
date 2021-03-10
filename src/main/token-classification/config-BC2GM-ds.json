@@ -1,7 +1,7 @@
 {
   "model_name_or_path": "microsoft/BiomedNLP-PubMedBERT-base-uncased-abstract-fulltext",
   "dataset_name": "bc2gm_corpus",
-  "output_dir": "/tmp/test-ner-bc2gm",
+  "output_dir": "/tmp/test-ner-bc2gm-ds",
   "do_train": true,
   "do_eval": true,
   "fp16": true,
